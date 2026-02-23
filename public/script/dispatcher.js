@@ -1,15 +1,19 @@
         // Состояние
         let currentUser = null;
         let masters = [];
-        let allRequests = [];
-        let filteredRequests = [];
+        let activeRequests = [];
+        let archivedRequests = [];
+        let currentView = 'active'; // 'active' или 'archived'
+        let currentStatusFilter = '';
         let searchTimeout;
 
         // Загрузка данных при старте
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dispatcher page loaded');
             loadUserInfo();
             loadMasters();
-            loadRequests();
+            loadActiveRequests();
+            loadArchivedRequests();
         });
 
         // Загрузка информации о пользователе
@@ -24,6 +28,7 @@
                     window.location.href = '/';
                 }
             } catch (error) {
+                console.error('Error loading user:', error);
                 showMessage('error', 'Ошибка загрузки данных пользователя');
             }
         }
@@ -44,98 +49,130 @@
                 const response = await fetch('/api/masters');
                 if (response.ok) {
                     masters = await response.json();
+                    console.log('Masters loaded:', masters);
                 }
             } catch (error) {
+                console.error('Error loading masters:', error);
                 showMessage('error', 'Ошибка загрузки списка мастеров');
             }
         }
 
-        // Загрузка заявок
-// Загрузка заявок
-async function loadRequests() {
-    try {
-        // Получаем текущий фильтр по статусу
-        const statusFilter = document.getElementById('statusFilter').value;
-        let url = '/api/requests';
-        
-        // Добавляем параметр статуса в URL, если он выбран
-        if (statusFilter && statusFilter !== '') {
-            url += '?status=' + encodeURIComponent(statusFilter);
+        // Загрузка активных заявок (без архива)
+        async function loadActiveRequests() {
+            try {
+                let url = '/api/requests';
+                if (currentStatusFilter) {
+                    url += '?status=' + encodeURIComponent(currentStatusFilter);
+                }
+                
+                console.log('Loading active requests from:', url);
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Ошибка загрузки');
+                
+                activeRequests = await response.json();
+                console.log('Loaded active requests:', activeRequests.length);
+                
+                if (currentView === 'active') {
+                    filterAndDisplayRequests();
+                }
+                updateStats();
+            } catch (error) {
+                console.error('Error loading active requests:', error);
+                showMessage('error', 'Ошибка загрузки активных заявок');
+            }
         }
-        
-        console.log('Loading requests from:', url);
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Ошибка загрузки');
-        
-        allRequests = await response.json();
-        console.log('Loaded requests:', allRequests);
-        
-        // Применяем локальные фильтры (поиск и показ архивных)
-        applyLocalFilters();
-        updateStats();
-    } catch (error) {
-        console.error('Error loading requests:', error);
-        showMessage('error', 'Ошибка загрузки заявок');
-    }
-}
 
-// Применение локальных фильтров (поиск и показ архивных)
-function applyLocalFilters() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const showArchive = document.getElementById('showArchive').checked;
-
-    filteredRequests = allRequests.filter(req => {
-        // Фильтр по архиву (если чекбокс не отмечен, скрываем удаленные)
-        if (!showArchive && req.status === 'deleted') return false;
-        
-        // Поиск по тексту
-        if (searchTerm) {
-            const searchable = `${req.clientName} ${req.phone} ${req.address} ${req.problemText}`.toLowerCase();
-            if (!searchable.includes(searchTerm)) return false;
+        // Загрузка архивных заявок
+        async function loadArchivedRequests() {
+            try {
+                console.log('Loading archived requests from: /api/requests/archived');
+                
+                const response = await fetch('/api/requests/archived');
+                if (!response.ok) throw new Error('Ошибка загрузки');
+                
+                archivedRequests = await response.json();
+                console.log('Loaded archived requests:', archivedRequests.length);
+                
+                if (currentView === 'archived') {
+                    filterAndDisplayRequests();
+                }
+                updateStats();
+            } catch (error) {
+                console.error('Error loading archived requests:', error);
+                showMessage('error', 'Ошибка загрузки архивных заявок');
+            }
         }
-        
-        return true;
-    });
 
-    console.log('Filtered requests:', filteredRequests.length);
-    renderRequests(filteredRequests);
-}
+        // Показать активные заявки
+        function showActiveRequests() {
+            currentView = 'active';
+            document.getElementById('tab-active').classList.add('active');
+            document.getElementById('tab-archive').classList.remove('active');
+            document.getElementById('archiveInfo').style.display = 'none';
+            document.getElementById('stat-new-card').style.display = 'flex';
+            document.getElementById('stat-assigned-card').style.display = 'flex';
+            document.getElementById('stat-progress-card').style.display = 'flex';
+            document.getElementById('stat-done-card').style.display = 'flex';
+            document.getElementById('stat-canceled-card').style.display = 'flex';
+            filterAndDisplayRequests();
+        }
 
-function applyFilters() {
-    // Перезагружаем заявки с сервера с новым статусом
-    loadRequests();
-}
+        // Показать архив
+        function showArchive() {
+            currentView = 'archived';
+            document.getElementById('tab-archive').classList.add('active');
+            document.getElementById('tab-active').classList.remove('active');
+            document.getElementById('archiveInfo').style.display = 'flex';
+            filterAndDisplayRequests();
+        }
+
+        // Фильтр по статусу из статистики
+        function filterByStatus(status) {
+            currentStatusFilter = status;
+            showActiveRequests();
+            loadActiveRequests();
+        }
+
+        // Фильтрация и отображение заявок
+        function filterAndDisplayRequests() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            let requestsToShow = currentView === 'active' ? activeRequests : archivedRequests;
+            
+            // Применяем поиск
+            if (searchTerm) {
+                requestsToShow = requestsToShow.filter(req => {
+                    const searchable = `${req.clientName} ${req.phone} ${req.address} ${req.problemText}`.toLowerCase();
+                    return searchable.includes(searchTerm);
+                });
+            }
+
+            renderRequests(requestsToShow);
+        }
 
         // Поиск с debounce
         function debounceSearch() {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 300);
+            searchTimeout = setTimeout(filterAndDisplayRequests, 300);
         }
 
         // Сброс фильтров
         function resetFilters() {
-            document.getElementById('statusFilter').value = '';
             document.getElementById('searchInput').value = '';
-            document.getElementById('showArchive').checked = false;
-            applyFilters();
+            currentStatusFilter = '';
+            showActiveRequests();
+            loadActiveRequests();
         }
 
         // Обновление статистики
         function updateStats() {
-            const stats = {
-                new: allRequests.filter(r => r.status === 'new').length,
-                assigned: allRequests.filter(r => r.status === 'assigned').length,
-                in_progress: allRequests.filter(r => r.status === 'in_progress').length,
-                done: allRequests.filter(r => r.status === 'done').length,
-                canceled: allRequests.filter(r => r.status === 'canceled').length
-            };
-
-            document.getElementById('stat-new').textContent = stats.new;
-            document.getElementById('stat-assigned').textContent = stats.assigned;
-            document.getElementById('stat-progress').textContent = stats.in_progress;
-            document.getElementById('stat-done').textContent = stats.done;
-            document.getElementById('stat-canceled').textContent = stats.canceled;
+            document.getElementById('stat-new').textContent = activeRequests.filter(r => r.status === 'new').length;
+            document.getElementById('stat-assigned').textContent = activeRequests.filter(r => r.status === 'assigned').length;
+            document.getElementById('stat-progress').textContent = activeRequests.filter(r => r.status === 'in_progress').length;
+            document.getElementById('stat-done').textContent = activeRequests.filter(r => r.status === 'done').length;
+            document.getElementById('stat-canceled').textContent = activeRequests.filter(r => r.status === 'canceled').length;
+            document.getElementById('stat-archived').textContent = archivedRequests.length;
         }
 
         // Отображение заявок
@@ -161,7 +198,7 @@ function applyFilters() {
                     'in_progress': '⚙️ В работе',
                     'done': '✅ Выполнена',
                     'canceled': '❌ Отменена',
-                    'deleted': '🗑️ Удалена'
+                    'deleted': '📦 В архиве'
                 }[req.status] || req.status;
 
                 const rowClass = req.status === 'deleted' ? 'deleted-row' : '';
@@ -188,20 +225,20 @@ function applyFilters() {
             }).join('');
         }
 
-        // Отображение действий в зависимости от статуса
+        // Отображение действий в зависимости от статуса и режима
         function renderActions(req) {
-            if (req.status === 'deleted') {
+            // В архиве
+            if (currentView === 'archived') {
                 return `
-                    <button class="btn btn-danger btn-sm" onclick="permanentDeleteRequest(${req.id})">
-                        <span class="btn-icon">🗑️</span> Удалить навсегда
+                    <button class="btn btn-warning btn-sm" onclick="restoreRequest(${req.id})">
+                        <span class="btn-icon">🔄</span> Восстановить
                     </button>
                 `;
             }
 
-            let actions = '';
-
+            // В активных заявках
             if (req.status === 'new') {
-                actions += `
+                return `
                     <select class="master-select" data-id="${req.id}">
                         <option value="">Выберите мастера</option>
                         ${masters.map(m => `<option value="${m.id}">👤 ${escapeHtml(m.full_name)}</option>`).join('')}
@@ -213,11 +250,12 @@ function applyFilters() {
             }
 
             if (req.status === 'assigned') {
-                actions += `<div class="status-info">⏳ Ожидает мастера</div>`;
+                return `<div class="status-info">⏳ Ожидает мастера</div>`;
             }
 
-            if (req.status !== 'done' && req.status !== 'canceled' && req.status !== 'deleted') {
-                actions += `
+            if (req.status === 'in_progress') {
+                return `
+                    <div class="status-info">⚙️ В работе</div>
                     <button class="btn btn-danger btn-sm" onclick="cancelRequest(${req.id})">
                         <span class="btn-icon">✗</span> Отменить
                     </button>
@@ -225,23 +263,24 @@ function applyFilters() {
             }
 
             if (req.status === 'done') {
-                actions += `<span class="status-info completed">✓ Завершена</span>`;
-            }
-
-            if (req.status === 'canceled') {
-                actions += `<span class="status-info canceled">✗ Отменена</span>`;
-            }
-
-            // Кнопка архивации для выполненных и отмененных
-            if (req.status === 'done' || req.status === 'canceled') {
-                actions += `
+                return `
+                    <span class="status-info completed">✓ Завершена</span>
                     <button class="btn btn-secondary btn-sm" onclick="archiveRequest(${req.id})">
                         <span class="btn-icon">📦</span> В архив
                     </button>
                 `;
             }
 
-            return actions;
+            if (req.status === 'canceled') {
+                return `
+                    <span class="status-info canceled">✗ Отменена</span>
+                    <button class="btn btn-secondary btn-sm" onclick="archiveRequest(${req.id})">
+                        <span class="btn-icon">📦</span> В архив
+                    </button>
+                `;
+            }
+
+            return '';
         }
 
         // Назначение мастера
@@ -269,12 +308,13 @@ function applyFilters() {
 
                 if (response.ok) {
                     showMessage('success', 'Мастер назначен');
-                    await loadRequests();
+                    await loadActiveRequests();
                 } else {
                     const data = await response.json();
                     showMessage('error', data.error || 'Ошибка при назначении');
                 }
             } catch (error) {
+                console.error('Assign error:', error);
                 showMessage('error', 'Ошибка соединения');
             } finally {
                 button.innerHTML = originalText;
@@ -298,12 +338,13 @@ function applyFilters() {
 
                 if (response.ok) {
                     showMessage('success', 'Заявка отменена');
-                    await loadRequests();
+                    await loadActiveRequests();
                 } else {
                     const data = await response.json();
                     showMessage('error', data.error || 'Ошибка при отмене');
                 }
             } catch (error) {
+                console.error('Cancel error:', error);
                 showMessage('error', 'Ошибка соединения');
             } finally {
                 button.innerHTML = originalText;
@@ -311,106 +352,81 @@ function applyFilters() {
             }
         }
 
-        // Архивация заявки (мягкое удаление)
-// Архивация заявки
-async function archiveRequest(requestId) {
-    if (!await confirmDialog('отправить заявку в архив')) return;
+        // Архивация заявки
+        async function archiveRequest(requestId) {
+            if (!await confirmDialog('отправить заявку в архив')) return;
 
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<span class="loading-spinner"></span> Архивация...';
-    button.disabled = true;
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="loading-spinner"></span> Архивация...';
+            button.disabled = true;
 
-    try {
-        console.log('Sending archive request for:', requestId);
-        
-        const response = await fetch(`/api/requests/${requestId}/archive`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
+            try {
+                console.log('Sending archive request for:', requestId);
+                
+                const response = await fetch(`/api/requests/${requestId}/archive`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Archive response:', response.status, data);
+
+                if (response.ok) {
+                    showMessage('success', '✅ Заявка отправлена в архив');
+                    await loadActiveRequests();
+                    await loadArchivedRequests();
+                } else {
+                    showMessage('error', `❌ ${data.error || 'Ошибка при архивации'}`);
+                }
+            } catch (error) {
+                console.error('Archive error:', error);
+                showMessage('error', '❌ Ошибка соединения с сервером');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
-        });
-
-        const data = await response.json();
-        console.log('Archive response:', response.status, data);
-
-        if (response.ok) {
-            showMessage('success', '✅ Заявка отправлена в архив');
-            await loadRequests(); // Перезагружаем список
-        } else {
-            showMessage('error', `❌ ${data.error || 'Ошибка при архивации'}`);
         }
-    } catch (error) {
-        console.error('Archive error:', error);
-        showMessage('error', '❌ Ошибка соединения с сервером');
-    } finally {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    }
-}
 
-// Полное удаление
-async function permanentDeleteRequest(requestId) {
-    if (!await confirmDialog('полностью удалить заявку', 'danger')) return;
+        // Восстановление из архива
+        async function restoreRequest(requestId) {
+            if (!await confirmDialog('восстановить заявку из архива')) return;
 
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<span class="loading-spinner"></span> Удаление...';
-    button.disabled = true;
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="loading-spinner"></span> Восстановление...';
+            button.disabled = true;
 
-    try {
-        console.log('Sending permanent delete for:', requestId);
-        
-        const response = await fetch(`/api/requests/${requestId}`, {
-            method: 'DELETE'
-        });
+            try {
+                console.log('Restoring request:', requestId);
+                
+                const response = await fetch(`/api/requests/${requestId}/restore`, {
+                    method: 'PATCH'
+                });
 
-        const data = await response.json();
-        console.log('Delete response:', response.status, data);
+                const data = await response.json();
+                console.log('Restore response:', response.status, data);
 
-        if (response.ok) {
-            showMessage('success', '✅ Заявка удалена навсегда');
-            await loadRequests();
-        } else {
-            showMessage('error', `❌ ${data.error || 'Ошибка при удалении'}`);
+                if (response.ok) {
+                    showMessage('success', '✅ Заявка восстановлена из архива');
+                    await loadActiveRequests();
+                    await loadArchivedRequests();
+                    if (currentView === 'archived') {
+                        filterAndDisplayRequests();
+                    }
+                } else {
+                    showMessage('error', `❌ ${data.error || 'Ошибка при восстановлении'}`);
+                }
+            } catch (error) {
+                console.error('Restore error:', error);
+                showMessage('error', '❌ Ошибка соединения');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
         }
-    } catch (error) {
-        console.error('Delete error:', error);
-        showMessage('error', '❌ Ошибка соединения с сервером');
-    } finally {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    }
-}
-
-// Восстановление из архива
-async function restoreRequest(requestId) {
-    if (!await confirmDialog('восстановить заявку из архива')) return;
-
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<span class="loading-spinner"></span> Восстановление...';
-    button.disabled = true;
-
-    try {
-        const response = await fetch(`/api/requests/${requestId}/restore`, {
-            method: 'PATCH'
-        });
-
-        if (response.ok) {
-            showMessage('success', '✅ Заявка восстановлена из архива');
-            await loadRequests();
-        } else {
-            const data = await response.json();
-            showMessage('error', `❌ ${data.error || 'Ошибка при восстановлении'}`);
-        }
-    } catch (error) {
-        showMessage('error', '❌ Ошибка соединения');
-    } finally {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    }
-}
 
         // Диалог подтверждения
         function confirmDialog(action, type = 'warning') {
@@ -425,23 +441,23 @@ async function restoreRequest(requestId) {
                         <div class="modal-title">Подтверждение действия</div>
                         <div class="modal-text">Вы уверены, что хотите ${action}?</div>
                         <div class="modal-actions">
-                            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove(); resolve(false)">Отмена</button>
-                            <button class="btn ${type === 'danger' ? 'btn-danger' : 'btn-primary'}" onclick="this.closest('.modal-overlay').remove(); resolve(true)">Подтвердить</button>
+                            <button class="btn btn-secondary" id="modal-cancel">Отмена</button>
+                            <button class="btn ${type === 'danger' ? 'btn-danger' : 'btn-primary'}" id="modal-confirm">Подтвердить</button>
                         </div>
                     </div>
                 `;
                 
-                overlay.querySelector('.btn-secondary').onclick = () => {
-                    overlay.remove();
+                document.body.appendChild(overlay);
+                
+                document.getElementById('modal-cancel').onclick = () => {
+                    document.body.removeChild(overlay);
                     resolve(false);
                 };
                 
-                overlay.querySelector(`.btn-${type === 'danger' ? 'danger' : 'primary'}`).onclick = () => {
-                    overlay.remove();
+                document.getElementById('modal-confirm').onclick = () => {
+                    document.body.removeChild(overlay);
                     resolve(true);
                 };
-                
-                document.body.appendChild(overlay);
             });
         }
 

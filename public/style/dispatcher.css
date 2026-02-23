@@ -132,11 +132,16 @@
             align-items: center;
             gap: 15px;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.active {
+            border: 2px solid #4CAF50;
         }
 
         .stat-icon {
@@ -154,6 +159,7 @@
         .stat-icon.progress { background: #e8f5e8; color: #388e3c; }
         .stat-icon.done { background: #d4edda; color: #2e7d32; }
         .stat-icon.canceled { background: #f8d7da; color: #c62828; }
+        .stat-icon.archived { background: #e9ecef; color: #6c757d; }
 
         .stat-info h3 {
             font-size: 28px;
@@ -180,40 +186,45 @@
             align-items: center;
         }
 
-        .filter-group {
+        .filter-tabs {
             display: flex;
-            align-items: center;
             gap: 10px;
-            flex: 1;
-            min-width: 250px;
+            flex-wrap: wrap;
         }
 
-        .filter-group label {
-            font-weight: 600;
-            color: #555;
-            min-width: 60px;
-        }
-
-        .filter-select {
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
+        .filter-tab {
+            padding: 10px 20px;
+            border-radius: 25px;
             background: #f8f9fa;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
         }
 
-        .filter-select:focus {
-            outline: none;
-            border-color: #4CAF50;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        .filter-tab:hover {
+            background: #e9ecef;
+        }
+
+        .filter-tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .filter-tab.archived {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .filter-tab.archived.active {
+            background: #6c757d;
+            color: white;
         }
 
         .search-box {
             flex: 2;
             position: relative;
+            min-width: 250px;
         }
 
         .search-box input {
@@ -258,7 +269,7 @@
             box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
         }
@@ -268,7 +279,7 @@
             color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #5a6268;
             transform: translateY(-2px);
         }
@@ -278,14 +289,29 @@
             color: white;
         }
 
-        .btn-danger:hover {
+        .btn-danger:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #e0a800;
+            transform: translateY(-2px);
         }
 
         .btn-sm {
             padding: 8px 15px;
             font-size: 13px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Таблица */
@@ -414,12 +440,6 @@
             background: #f8d7da;
             border-left-color: #dc3545;
             color: #721c24;
-        }
-
-        .status-info.deleted {
-            background: #e9ecef;
-            border-left-color: #6c757d;
-            color: #495057;
         }
 
         .status-info.archived {
@@ -586,6 +606,7 @@
             border-radius: 50%;
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
         }
 
         @keyframes spin {
@@ -608,12 +629,9 @@
                 justify-content: center;
             }
 
-            .filter-panel {
-                flex-direction: column;
-            }
-
-            .filter-group {
+            .filter-tabs {
                 width: 100%;
+                justify-content: center;
             }
 
             .stats-grid {
@@ -623,29 +641,6 @@
             td {
                 min-width: 150px;
             }
-        }
-
-        /* Чекбокс показа архивных */
-        .archive-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
-            background: #f8f9fa;
-            border-radius: 25px;
-            cursor: pointer;
-        }
-
-        .archive-toggle input {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .archive-toggle label {
-            cursor: pointer;
-            font-size: 14px;
-            color: #495057;
         }
 
         /* Кнопка создания заявки */
@@ -661,9 +656,47 @@
             font-weight: 600;
             box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
             transition: all 0.3s;
+            margin-bottom: 20px;
         }
 
         .create-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        /* Статистика архивных */
+        .archived-stats {
+            background: #e9ecef;
+            border-left: 4px solid #6c757d;
+        }
+
+        .text-muted {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        /* Индикация загрузки */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            color: #004085;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box.warning {
+            background: #fff3cd;
+            border-color: #ffeeba;
+            color: #856404;
         }
