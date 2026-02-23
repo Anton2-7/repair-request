@@ -40,7 +40,7 @@ FullStack приложение для управления заявками на
 
 ```bash
 # Клонируем репозиторий
-git clone <url-репозитория>
+git clone https://github.com/Anton2-7/repair-request
 cd repair-requests/backend
 
 # Устанавливаем зависимости
