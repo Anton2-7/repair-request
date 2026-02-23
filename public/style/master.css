@@ -1,0 +1,343 @@
+        /* Стили для страницы мастера */
+        .table-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 140px;
+        }
+        
+        .problem-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .request-id {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+        
+        .text-center {
+            text-align: center;
+            padding: 30px !important;
+            color: #666;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 5px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .user-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .message.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .message.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .message.info {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            color: #004085;
+        }
+        
+        .message-icon {
+            font-size: 1.3em;
+        }
+        
+        .message-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.6;
+            padding: 0 5px;
+            line-height: 1;
+        }
+        
+        .message-close:hover {
+            opacity: 1;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filter-bar label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .btn-icon {
+            margin-right: 5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-new {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .status-assigned {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .status-in_progress {
+            background-color: #e8f5e8;
+            color: #1e7e34;
+        }
+
+        .status-done {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-canceled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .refresh-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .refresh-btn:hover {
+            background-color: #138496;
+        }
+
+        /* Контейнер для сообщений */
+        #message-container {
+            min-height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .stats-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #4CAF50;
+            font-size: 18px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            min-width: 200px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }

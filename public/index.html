@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему - Сервис заявок на ремонт</title>
+        <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="./style/index.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">🔧</div>
+                <h1>Сервис заявок на ремонт</h1>
+                <p>Войдите в систему для продолжения работы</p>
+            </div>
+            
+            <div class="login-body">
+                <!-- Контейнер для сообщений -->
+                <div id="message-container"></div>
+
+                <!-- Форма входа -->
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" 
+                               id="username" 
+                               class="form-control" 
+                               placeholder="Введите логин"
+                               autocomplete="off"
+                               value="dispatcher">
+                    </div>
+                    <div class="error-message" id="username-error"></div>
+                </div>
+
+                <button onclick="login()" class="btn" id="login-btn">
+                    <span class="btn-icon">🚪</span> Войти в систему
+                </button>
+
+                <!-- Быстрый вход через выбор пользователя -->
+                <div class="quick-login-hint">или выберите пользователя</div>
+
+                <div class="user-list">
+                    <div class="user-list-title">
+                        <span>👥 Тестовые пользователи</span>
+                    </div>
+                    <div class="user-grid">
+                        <div class="user-item" onclick="quickLogin('dispatcher')">
+                            <div class="user-avatar">👤</div>
+                            <div class="user-name">dispatcher</div>
+                            <span class="user-role dispatcher">диспетчер</span>
+                        </div>
+                        <div class="user-item" onclick="quickLogin('master1')">
+                            <div class="user-avatar">🔧</div>
+                            <div class="user-name">master1</div>
+                            <span class="user-role master">мастер</span>
+                        </div>
+                        <div class="user-item" onclick="quickLogin('master2')">
+                            <div class="user-avatar">🔧</div>
+                            <div class="user-name">master2</div>
+                            <span class="user-role master">мастер</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 10px; font-size: 13px; color: #2e7d32;">
+                    <strong>ℹ️ Демо-режим</strong><br>
+                    Для входа достаточно ввести имя пользователя. Пароль не требуется.
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            © 2024 Сервис заявок на ремонт | <a href="#">Документация</a>
+        </div>
+    </div>
+
+    <script src="./script/index.js"></script>
+</body>
+</html>
